@@ -33,21 +33,23 @@ const byte numChars = 32;
 char serial_data[numChars];
 
 // initialize SensorData variables as struct
-struct{
+struct s_data{
   float WaterLevel;
   float Ph;
   float EC;
   int Temperature;
   int Humidity;
-}sensor_data;
+};
 
 // initialize Actuators variables as struct
 struct{
-  boolean flag_LED, flag_FANIN, flag_FANOUT;
-  int LEDpin_in, FANpin_in;
-  int LEDpin_out, FANpin_out;
-}actuator_var;
+  int LEDpin_in, FANpin_in, PUMPpin_in;
+  int LEDpin_out, FANpin_out, PUMPpin_out;
+}actuator_pin;
 
+struct{
+  bool LED_state, FAN_state, PUMP_state;
+}actuator_var;
 
 void setup() {
   // Serial connection at 115200
@@ -134,21 +136,36 @@ char receive_from_rasp() {
 }// end of receive_from_rasp
 
 void initialize_variables() {
-  // initialize actuator & sensor variables
-  actuator_var.FANpin_in = 3;
-  actuator_var.LEDpin_in = 5;
-  actuator_var.LEDpin_out = 8;
-  actuator_var.FANpin_out = 6;
+  /*!
+     \brief "initialize variables"
+     \param "actuator_var struct, sensor_data struct, actuator_pin struct"
+     \pre "during system start"
+     \post "variables and pins are initialized"
+     \return "No return"
+  */
+  actuator_pin.FANpin_in = 3;
+  actuator_pin.LEDpin_in = 5;
+  actuator_pin.LEDpin_out = 8;
+  actuator_pin.FANpin_out = 6;
   sensor_data.EC = 0.0;
   sensor_data.Ph = 0.0;
   sensor_data.WaterLevel = 0.0;
   sensor_data.Temperature = 0;
   sensor_data.Humidity = 0;
-
-}
+  actuator_var.FAN_state = false
+  actuator_var.LED_state = false
+  actuator_var.PUMP_state = false
+}// end of initialize_variables
 
 void read_sensors() {
-  /* code */
+  /*!
+     \brief "Read SensorData"
+     \param "Param description"
+     \pre "arduino receives SENSOR DATA as input on Interrupt"
+     \post "arduino reads and sends the SensorData to Raspi"
+     \return "Return of the function"
+  */
+
 }
 
 void read_actuator_command() {
@@ -157,6 +174,27 @@ void read_actuator_command() {
 
 void execute_actuator_command(){
 
+}
+
+void sort(float sensorValue[])
+{
+  /*!
+     \brief "Sort the array"
+     \param "tempi: temporary variable, sensorValue[]: received array"
+     \pre "arduino reads 10 sensor values in succession"
+     \post "sorts the array and sends to the main function for further action"
+     \return "No return"
+  */
+  float tempi=0.0;
+  for (int i=0;i<9;i++){
+    for(int j=i+1;j<10;j++){
+      if(sensorValue[i]>sensorValue[j]){
+        tempi = sensorValue[i];
+        sensorValue[i] = sensorValue[j];
+        sensorValue[j] = tempi;
+      }// end of if
+      }// end of for_2
+    }// end of for_1
 }
 
 void loop() {
