@@ -18,10 +18,24 @@
  #include<dht.h>
  #include<string.h>
  #include<Arduino.h>
+ #include<waterlevel.h>
+ #include<ph.h>
+ #include<ec.h>
+ #include<actuator.h>
+
+ // input pins
  #define DHT11_PIN A3
  #define WLS_sensorpin A2
  #define TDS_sensorpin A0
  #define PHS_sensorpin A1
+ #define trig_pin
+ #define echo_pin
+ #define DS188B20_pin 12;
+// output pins
+#define Light_pin
+#define Fans_pin
+#define Pump_mixing_pin
+#define Pump_pour_pin
 
 // initialize Interrupt variable
 const int BUTTON =2;
@@ -64,19 +78,8 @@ void setup() {
   //pinMode(BUTTON, INPUT);
   digitalWrite(BUTTON, HIGH);
 
-  // initialize sensor pins as INPUT
-  pinMode(WLS_sensorpin, INPUT);
-  pinMode(PHS_sensorpin, INPUT);
-  pinMode(TDS_sensorpin, INPUT);
-
-  // initialize input pins Raspberry Pi -> Arduino
-  pinMode(actuator_var.LEDpin_in, INPUT);
-  pinMode(actuator_var.FANpin_in, INPUT);
-
-  // initialize output pins Arduino -> Actuators
-  pinMode(actuator_var.LEDpin_out, OUTPUT);
-  pinMode(actuator_var.FANpin_out, OUTPUT);
-
+  //initialize initialize_pins
+  initialize_pins();
   // initialize Interrupt
   attachInterrupt (0, data_transceive_interrupt, LOW);
 
@@ -156,6 +159,22 @@ void initialize_variables() {
   actuator_var.LED_state = false
   actuator_var.PUMP_state = false
 }// end of initialize_variables
+
+void initialize_pins(){
+  // initialize sensor pins as INPUT
+  pinMode(WLS_sensorpin, INPUT);
+  pinMode(PHS_sensorpin, INPUT);
+  pinMode(TDS_sensorpin, INPUT);
+
+  // initialize input pins Raspberry Pi -> Arduino
+  pinMode(actuator_var.LEDpin_in, INPUT);
+  pinMode(actuator_var.FANpin_in, INPUT);
+
+  // initialize output pins Arduino -> Actuators
+  pinMode(actuator_var.LEDpin_out, OUTPUT);
+  pinMode(actuator_var.FANpin_out, OUTPUT);
+}
+
 
 void read_sensors() {
   /*!
