@@ -10,8 +10,7 @@
 float ph::read(uint8_t pin){
   /*!
      \brief "read Ph values"
-     \param "PHS_bits: read 10 Ph value
-            pH: final averaged ph value"
+     \param "pin: ph sensor pin"
      \pre "any function or process calls for ph values"
      \post "the external process receives PH values"
      \return "pH:double"

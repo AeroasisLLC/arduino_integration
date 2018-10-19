@@ -23,7 +23,7 @@
  #include<ec.h>
  #include<actuator.h>
 
- // input pins
+ // sensor pins
  #define DHT11_PIN A3
  #define WLS_sensorpin A2
  #define TDS_sensorpin A0
@@ -31,39 +31,44 @@
  #define trig_pin
  #define echo_pin
  #define DS188B20_pin 12;
-// output pins
-#define Light_pin
-#define Fans_pin
-#define Pump_mixing_pin
-#define Pump_pour_pin
+// actuator pins
+// input
+#define Led_pin_in
+#define Fans_pin_in
+#define Pump_mixing_pin_in
+#define Pump_pour_pin_in
+// output
+#define Led_pin_out
+#define Fans_pin_out
+#define Pump_mixing_pin_out
+#define Pump_pour_pin_out
+
+//create objects of sensor data classes
+waterlevel WaterLevel;
+ph Ph;
+ec Ec;
+actuator Actuator;
+dht DHT;
 
 // initialize Interrupt variable
 const int BUTTON =2;
-dht DHT;             // initialize DHT variable
-
 // Serial data variables
 boolean newData = false;
 const byte numChars = 32;
 char serial_data[numChars];
 
 // initialize SensorData variables as struct
-struct s_data{
+struct {
   float WaterLevel;
   float Ph;
   float EC;
   int Temperature;
   int Humidity;
-};
-
-// initialize Actuators variables as struct
-struct{
-  int LEDpin_in, FANpin_in, PUMPpin_in;
-  int LEDpin_out, FANpin_out, PUMPpin_out;
-}actuator_pin;
+}sensor_data;
 
 struct{
-  bool LED_state, FAN_state, PUMP_state;
-}actuator_var;
+  bool LED_state, FAN_state, PUMP_mixing_state, PUMP_pour_state;
+}actuator_state;
 
 void setup() {
   // Serial connection at 115200
@@ -146,18 +151,18 @@ void initialize_variables() {
      \post "variables and pins are initialized"
      \return "No return"
   */
-  actuator_pin.FANpin_in = 3;
-  actuator_pin.LEDpin_in = 5;
-  actuator_pin.LEDpin_out = 8;
-  actuator_pin.FANpin_out = 6;
+
   sensor_data.EC = 0.0;
   sensor_data.Ph = 0.0;
   sensor_data.WaterLevel = 0.0;
   sensor_data.Temperature = 0;
   sensor_data.Humidity = 0;
-  actuator_var.FAN_state = false
-  actuator_var.LED_state = false
-  actuator_var.PUMP_state = false
+
+  // initialize actuator states
+  actuator_state.FAN_state = false;
+  actuator_state.LED_state = false;
+  actuator_state.PUMP_mixing_state = false;
+  actuator_state.PUMP_pour_state = false;
 }// end of initialize_variables
 
 void initialize_pins(){
@@ -167,32 +172,102 @@ void initialize_pins(){
   pinMode(TDS_sensorpin, INPUT);
 
   // initialize input pins Raspberry Pi -> Arduino
-  pinMode(actuator_var.LEDpin_in, INPUT);
-  pinMode(actuator_var.FANpin_in, INPUT);
+  pinMode(Led_pin_in, INPUT);
+  pinMode(Fans_pin_in, INPUT);
+  pinMode(Pump_pour_pin_in, INPUT);
+  pinMode(Pump_mixing_pin_in, INPUT);
 
   // initialize output pins Arduino -> Actuators
-  pinMode(actuator_var.LEDpin_out, OUTPUT);
-  pinMode(actuator_var.FANpin_out, OUTPUT);
+  pinMode(Led_pin_out, OUTPUT);
+  pinMode(Fans_pin_out, OUTPUT);
+  pinMode(Pump_pour_pin_out, OUTPUT);
+  pinMode(Pump_mixing_pin_out, OUTPUT);
 }
 
 
 void read_sensors() {
   /*!
-     \brief "Read SensorData"
-     \param "Param description"
+     \brief "Read SensorData and send it to Raspi"
+     \param "AE6C88FE: data packet signature
+            sensor_data.temperature: temperature data
+            sensor_data.humidity: humidity data
+            sensor_data.ec: ec data
+            sensor_data.ph: ph data
+            sensor_data.waterlevel: waterlevel data"
      \pre "arduino receives SENSOR DATA as input on Interrupt"
      \post "arduino reads and sends the SensorData to Raspi"
      \return "Return of the function"
   */
+  /*!< THS_ok: start the temp/Humidity sensor */
+  int THS_ok = 0;
 
+  // read temperature data
+  THS_ok = DHT.read11(DHT11_PIN);
+  if (!THS_ok)
+    sensor_data.Temperature = DHT.temperature;
+  else
+    sensor_data.Temperature = -1;
+
+  // read Humidity data
+  if (!THS_ok)
+    sensor_data.Humidity = DHT.humidity;
+  else
+    sensor_data.Humidity = -1;
+
+  // read ph data
+  sensor_data.Ph = Ph.read();
+  // read ec data
+  sensor_data.EC = Ec.read();
+  // read water level data
+  sensor_data.WaterLevel = WaterLevel.read();
+  // send the data to Raspi
+  Serial.print("AE6C88FE");
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Temperature);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Humidity);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.WaterLevel);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Ph);
+  Serial.print("\t\t");
+  Serial.println(sensor_data.EC);
 }
 
+
 void read_actuator_command() {
-  /* code */
+  /*!
+     \brief "read actuator Commands"
+     \param "actuator_state.FAN_state: state of fan
+            actuator_state.LED_state: state of LED
+            actuator_state.PUMP_pour_state: state of pouring pump
+            actuator_state.PUMP_mixing_state: state of mixing pump"
+     \pre "Raspi sends request for actuator reading"
+     \post "the actuators are operated as per received input"
+     \return "no Return"
+  */
+
+  actuator_state.LED_state = digitalRead(Led_pin_in);
+  actuator_state.FAN_state = digitalRead(Fans_pin_in);
+  actuator_state.PUMP_mixing_state = digitalRead(Pump_mixing_pin_in);
+  actuator_state.PUMP_pour_state = digitalRead(Pump_pour_pin_in);
+
+  // execute actuator Commands
+  execute_actuator_command();
+
 }
 
 void execute_actuator_command(){
-
+/*!
+   \brief "execute actuator commands as read before"
+   \pre "The actuator readings are taken"
+   \post "the actuators are performing as per Commands"
+   \return "No Return"
+*/
+digitalWrite(Led_pin_out, actuator_state.LED_state);
+digitalWrite(Fans_pin_out, actuator_state.FAN_state);
+digitalWrite(Pump_mixing_pin_out, actuator_state.PUMP_mixing_state);
+digitaWrite(Pump_pour_pin_out, actuator_state.PUMP_pour_state);
 }
 
 void sort(float sensorValue[])
