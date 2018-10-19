@@ -66,6 +66,7 @@ struct {
   int Humidity;
 }sensor_data;
 
+// state variables for actuators
 struct{
   bool LED_state, FAN_state, PUMP_mixing_state, PUMP_pour_state;
 }actuator_state;
@@ -83,7 +84,7 @@ void setup() {
   //pinMode(BUTTON, INPUT);
   digitalWrite(BUTTON, HIGH);
 
-  //initialize initialize_pins
+  //initialize pinMode
   initialize_pins();
   // initialize Interrupt
   attachInterrupt (0, data_transceive_interrupt, LOW);
