@@ -75,11 +75,6 @@ void setup() {
   // Serial connection at 115200
   Serial.begin(15200);
 
-  // Serial output "AEROASIS LOG"
-  while (!Serial);
-  Serial.println("\t \t AEROASIS LOG");
-  Serial.println("Temperature(C) \tHumidity(%) \tWater Level \tpH \tTurbidity");
-
   // initialize Interrupt as HIGH
   //pinMode(BUTTON, INPUT);
   digitalWrite(BUTTON, HIGH);
@@ -96,22 +91,20 @@ void setup() {
 void data_transceive_interrupt() {
   cli(); // disable Interrupt
 
-  // send "SEND REQ" to Raspberry Pi
-  Serial.print("SEND REQ");
-
-  // Receive data from Raspberry Pi
-  do {
-    receive_from_rasp();
-  } while(newData == false);
-
-
-  if (serial_data == "SENSOR DATA"){
-    read_sensors();
-  }
-  else if(serial_data == "ACTUATOR"){
-    read_actuator_command();
-  }
-
+  // send Sensor Data to Raspberry Pi
+  // Serial.print("SEND REQ");
+  Serial.print("AE6C88FE");
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Temperature);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Humidity);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.WaterLevel);
+  Serial.print("\t\t");
+  Serial.print(sensor_data.Ph);
+  Serial.print("\t\t");
+  Serial.println(sensor_data.EC);
+sei();  // enable global Interrupt
 
 }// end of data_transceive_interrupt
 
@@ -221,18 +214,8 @@ void read_sensors() {
   sensor_data.EC = Ec.read();
   // read water level data
   sensor_data.WaterLevel = WaterLevel.read();
-  // send the data to Raspi
-  Serial.print("AE6C88FE");
-  Serial.print("\t\t");
-  Serial.print(sensor_data.Temperature);
-  Serial.print("\t\t");
-  Serial.print(sensor_data.Humidity);
-  Serial.print("\t\t");
-  Serial.print(sensor_data.WaterLevel);
-  Serial.print("\t\t");
-  Serial.print(sensor_data.Ph);
-  Serial.print("\t\t");
-  Serial.println(sensor_data.EC);
+  
+
 }
 
 
@@ -271,27 +254,9 @@ digitalWrite(Pump_mixing_pin_out, actuator_state.PUMP_mixing_state);
 digitaWrite(Pump_pour_pin_out, actuator_state.PUMP_pour_state);
 }
 
-void sort(float sensorValue[])
-{
-  /*!
-     \brief "Sort the array"
-     \param "tempi: temporary variable, sensorValue[]: received array"
-     \pre "arduino reads 10 sensor values in succession"
-     \post "sorts the array and sends to the main function for further action"
-     \return "No return"
-  */
-  float tempi=0.0;
-  for (int i=0;i<9;i++){
-    for(int j=i+1;j<10;j++){
-      if(sensorValue[i]>sensorValue[j]){
-        tempi = sensorValue[i];
-        sensorValue[i] = sensorValue[j];
-        sensorValue[j] = tempi;
-      }// end of if
-      }// end of for_2
-    }// end of for_1
-}
-
 void loop() {
-  /* code */
+  read_sensors();
+  read_actuator_command();
+  execute_actuator_command();
+  delay(200);
 }
