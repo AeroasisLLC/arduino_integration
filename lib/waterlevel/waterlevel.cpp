@@ -7,7 +7,7 @@
 
 #include<waterlevel.h>
 
-float waterlevel::read(uint8_t trig_pin, uint8_t echo_pin){
+float waterlevel::read(int trig_pin, int echo_pin){
   /*!
      \brief read waterlevel
      \param "input: trig_pin, echo_pin
@@ -18,6 +18,7 @@ float waterlevel::read(uint8_t trig_pin, uint8_t echo_pin){
   */
 
   long duration, cm;
+  int full_length = 100;
   float percent;
   // set the pinMode
   pinMode(trig_pin, OUTPUT);

@@ -15,33 +15,33 @@
   av - analog value
   dv - digital value*/
 
- #include<dht.h>
- #include<string.h>
- #include<Arduino.h>
- #include<waterlevel.h>
- #include<ph.h>
- #include<ec.h>
- #include<actuator.h>
+ #include <dht.h>
+ #include <string.h>
+ #include <Arduino.h>
+ #include <waterlevel.h>
+ #include <ph.h>
+ #include <ec.h>
+ #include <actuator.h>
 
  // sensor pins
  #define DHT11_PIN A3
- #define WLS_sensorpin A2
- #define TDS_sensorpin A0
- #define PHS_sensorpin A1
- #define trig_pin
- #define echo_pin
- #define DS188B20_pin 12;
+ uint8_t WLS_sensorpin = A2;
+ uint8_t TDS_sensorpin = A0;
+ uint8_t PHS_sensorpin = A1;
+ uint8_t trig_pin = 10;
+ uint8_t echo_pin = 11;
+ uint8_t DS188B20_pin = 12;
 // actuator pins
 // input
-#define Led_pin_in
-#define Fans_pin_in
-#define Pump_mixing_pin_in
-#define Pump_pour_pin_in
+#define Led_pin_in 10
+#define Fans_pin_in 3
+#define Pump_mixing_pin_in 4
+#define Pump_pour_pin_in 5
 // output
-#define Led_pin_out
-#define Fans_pin_out
-#define Pump_mixing_pin_out
-#define Pump_pour_pin_out
+#define Led_pin_out 6
+#define Fans_pin_out 7
+#define Pump_mixing_pin_out 8
+#define Pump_pour_pin_out 9
 
 //create objects of sensor data classes
 waterlevel WaterLevel;
@@ -49,6 +49,12 @@ ph Ph;
 ec Ec;
 actuator Actuator;
 dht DHT;
+
+void initialize_variables();
+void initialize_pins();
+void execute_actuator_command();
+void read_actuator_command();
+void data_transceive_interrupt();
 
 // initialize Interrupt variable
 const int BUTTON =2;
@@ -67,9 +73,14 @@ struct {
 }sensor_data;
 
 // state variables for actuators
-struct{
-  bool LED_state, FAN_state, PUMP_mixing_state, PUMP_pour_state;
-}actuator_state;
+struct {
+  bool LED_state;
+  bool FAN_state;
+  bool PUMP_mixing_state;
+  bool PUMP_pour_state;
+}actuator_state = {
+  false, false, false, false
+};
 
 void setup() {
   // Serial connection at 115200
@@ -109,7 +120,7 @@ sei();  // enable global Interrupt
 }// end of data_transceive_interrupt
 
 
-char receive_from_rasp() {
+void receive_from_rasp() {
   // Function to receive Serial Data from Raspberry Pi
   static byte ndx = 0;
   char endMarker = '\n';
@@ -194,6 +205,11 @@ void read_sensors() {
   */
   /*!< THS_ok: start the temp/Humidity sensor */
   int THS_ok = 0;
+  uint8_t PHS_sensorpin = A1;
+  uint8_t trig_pin = 12;
+  uint8_t echo_pin = 11;
+  uint8_t ECsensorPin = A0;  //EC Meter analog output,pin on analog 1
+  uint8_t DS18B20_Pin = A4;
 
   // read temperature data
   THS_ok = DHT.read11(DHT11_PIN);
@@ -209,12 +225,12 @@ void read_sensors() {
     sensor_data.Humidity = -1;
 
   // read ph data
-  sensor_data.Ph = Ph.read();
+  sensor_data.Ph = Ph.read(PHS_sensorpin);
   // read ec data
-  sensor_data.EC = Ec.read();
+  sensor_data.EC = Ec.read(ECsensorPin, DS18B20_Pin);
   // read water level data
-  sensor_data.WaterLevel = WaterLevel.read();
-  
+  sensor_data.WaterLevel = WaterLevel.read(trig_pin, echo_pin);
+
 
 }
 
@@ -251,7 +267,7 @@ void execute_actuator_command(){
 digitalWrite(Led_pin_out, actuator_state.LED_state);
 digitalWrite(Fans_pin_out, actuator_state.FAN_state);
 digitalWrite(Pump_mixing_pin_out, actuator_state.PUMP_mixing_state);
-digitaWrite(Pump_pour_pin_out, actuator_state.PUMP_pour_state);
+digitalWrite(Pump_pour_pin_out, actuator_state.PUMP_pour_state);
 }
 
 void loop() {

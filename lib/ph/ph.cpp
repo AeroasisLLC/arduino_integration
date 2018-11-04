@@ -26,7 +26,7 @@ float ph::read(uint8_t pin){
   // read 10 ph analog values
   for (int i=0;i<10;i++){
     PH_bits[i] = analogRead(pin);
-    delay(100);
+    delay(200);
    }
   // sort the ph buffer
   sort(PH_bits);
