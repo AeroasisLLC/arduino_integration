@@ -40,7 +40,7 @@ float waterlevel::read(int trig_pin, int echo_pin){
   cm = (duration/2) / 29.1;     // Divide by 29.1 or multiply by 0.0343
 
   // convert to percent
-  percent = ((cm - full_length)/full_length)*100;
-  return percent;
+  // percent = ((cm - full_length)/full_length)*100;
+  return cm;
 
 }

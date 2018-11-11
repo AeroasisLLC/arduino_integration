@@ -16,6 +16,7 @@ OneWire ds(DS18B20_Pin);
 
  ec::ec(){
   clearBuffer();
+  TempProcess(StartConvert);
 }
 
 float ec::read(uint8_t ec_pin, uint8_t temp_pin){
@@ -45,6 +46,7 @@ float ec::read(uint8_t ec_pin, uint8_t temp_pin){
     AnalogAverage = AnalogValueTotal / numReadings;
 
     temperature = TempProcess(ReadTemperature);  // read the current temperature from the  DS18B20
+    // Serial.println(temperature);
     TempProcess(StartConvert);                   //after the reading,start the convert for next reading
 
     float TempCoefficient=1.0+0.0185*(temperature-25.0);    //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.0185*(fTP-25.0));
@@ -98,16 +100,16 @@ float ec::TempProcess(bool ch)
   static float TemperatureSum;
   if(!ch){
           if ( !ds.search(addr)) {
-              Serial.println("no more sensors on chain, reset search!");
+              // Serial.println("no more sensors on chain, reset search!");
               ds.reset_search();
               return 0;
           }
           if ( OneWire::crc8( addr, 7) != addr[7]) {
-              Serial.println("CRC is not valid!");
+              // Serial.println("CRC is not valid!");
               return 0;
           }
           if ( addr[0] != 0x10 && addr[0] != 0x28) {
-              Serial.print("Device is not recognized!");
+              // Serial.print("Device is not recognized!");
               return 0;
           }
           ds.reset();

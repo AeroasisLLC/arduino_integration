@@ -25,18 +25,18 @@
 
  // sensor pins
  #define DHT11_PIN A3
- uint8_t WLS_sensorpin = A2;
- uint8_t TDS_sensorpin = A0;
- uint8_t PHS_sensorpin = A1;
+ // uint8_t TDS_sensorpin = A0;
+ uint8_t PHS_sensorpin = A0;
  uint8_t trig_pin = 10;
  uint8_t echo_pin = 11;
- uint8_t DS188B20_pin = 12;
+ uint8_t DS188B20_pin = 3;
+ uint8_t ECsensorPin = A2;
 // actuator pins
 // input
-#define Led_pin_in 10
-#define Fans_pin_in 3
-#define Pump_mixing_pin_in 4
-#define Pump_pour_pin_in 5
+#define Led_pin_in 5
+#define Fans_pin_in 4
+#define Pump_mixing_pin_in 12
+#define Pump_pour_pin_in A5
 // output
 #define Led_pin_out 6
 #define Fans_pin_out 7
@@ -78,13 +78,11 @@ struct {
   bool FAN_state;
   bool PUMP_mixing_state;
   bool PUMP_pour_state;
-}actuator_state = {
-  false, false, false, false
-};
+}actuator_state;
 
 void setup() {
   // Serial connection at 115200
-  Serial.begin(15200);
+  Serial.begin(115200);
 
   // initialize Interrupt as HIGH
   //pinMode(BUTTON, INPUT);
@@ -172,9 +170,10 @@ void initialize_variables() {
 
 void initialize_pins(){
   // initialize sensor pins as INPUT
-  pinMode(WLS_sensorpin, INPUT);
+  // pinMode(WLS_sensorpin, INPUT);
   pinMode(PHS_sensorpin, INPUT);
-  pinMode(TDS_sensorpin, INPUT);
+  pinMode(ECsensorPin, INPUT);
+  pinMode(DS188B20_pin, INPUT);
 
   // initialize input pins Raspberry Pi -> Arduino
   pinMode(Led_pin_in, INPUT);
@@ -205,11 +204,8 @@ void read_sensors() {
   */
   /*!< THS_ok: start the temp/Humidity sensor */
   int THS_ok = 0;
-  uint8_t PHS_sensorpin = A1;
-  uint8_t trig_pin = 12;
-  uint8_t echo_pin = 11;
-  uint8_t ECsensorPin = A0;  //EC Meter analog output,pin on analog 1
-  uint8_t DS18B20_Pin = A4;
+  uint8_t ECsensorPin = A2;  //EC Meter analog output,pin on analog 1
+  uint8_t DS18B20_Pin = 3;
 
   // read temperature data
   THS_ok = DHT.read11(DHT11_PIN);
@@ -248,7 +244,9 @@ void read_actuator_command() {
   */
 
   actuator_state.LED_state = digitalRead(Led_pin_in);
+  // Serial.println(actuator_state.LED_state);
   actuator_state.FAN_state = digitalRead(Fans_pin_in);
+  // Serial.println(actuator_state.FAN_state);
   actuator_state.PUMP_mixing_state = digitalRead(Pump_mixing_pin_in);
   actuator_state.PUMP_pour_state = digitalRead(Pump_pour_pin_in);
 
@@ -274,5 +272,6 @@ void loop() {
   read_sensors();
   read_actuator_command();
   execute_actuator_command();
+  // data_transceive_interrupt();
   delay(200);
 }
