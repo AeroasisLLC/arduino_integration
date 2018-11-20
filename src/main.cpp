@@ -98,7 +98,7 @@ void setup() {
 }
 
 void data_transceive_interrupt() {
-  cli(); // disable Interrupt
+  // cli(); // disable Interrupt
 
   // send Sensor Data to Raspberry Pi
   // Serial.print("SEND REQ");
@@ -113,7 +113,7 @@ void data_transceive_interrupt() {
   Serial.print(sensor_data.Ph);
   Serial.print("\t\t");
   Serial.println(sensor_data.EC);
-sei();  // enable global Interrupt
+// sei();  // enable global Interrupt
 
 }// end of data_transceive_interrupt
 
