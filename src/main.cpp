@@ -43,6 +43,12 @@
 #define Pump_mixing_pin_out 8
 #define Pump_pour_pin_out 9
 
+//pH
+#define Ph_up_pin_in 2
+#define Ph_down_pin_in 4
+#define Ph_up_pin_out 8
+#define Ph_down_pin_out 7
+
 //create objects of sensor data classes
 waterlevel WaterLevel;
 ph Ph;
@@ -78,6 +84,8 @@ struct {
   bool FAN_state;
   bool PUMP_mixing_state;
   bool PUMP_pour_state;
+  bool Ph_Up_state;
+  bool Ph_Down_state;
 }actuator_state;
 
 void setup() {
@@ -250,6 +258,8 @@ void read_actuator_command() {
   actuator_state.PUMP_mixing_state = digitalRead(Pump_mixing_pin_in);
   actuator_state.PUMP_pour_state = digitalRead(Pump_pour_pin_in);
 
+  actuator_state.Ph_Up_state = digitalRead(Ph_up_pin_in);
+  actuator_state.Ph_Down_state = digitalRead(Ph_down_pin_in);
   // execute actuator Commands
   execute_actuator_command();
 
@@ -266,6 +276,8 @@ digitalWrite(Led_pin_out, actuator_state.LED_state);
 digitalWrite(Fans_pin_out, actuator_state.FAN_state);
 digitalWrite(Pump_mixing_pin_out, actuator_state.PUMP_mixing_state);
 digitalWrite(Pump_pour_pin_out, actuator_state.PUMP_pour_state);
+digitalWrite(Ph_up_pin_out, actuator_state.Ph_Up_state);
+digitalWrite(Ph_down_pin_out, actuator_state.Ph_Down_state);
 }
 
 void loop() {
